@@ -14,15 +14,15 @@
 // | Symbol Map		 |
 // | 32 Symbols    |
 // |---------------|
-// | 2 Byte        |
+// | 3 Byte        |
 // | Reader State  |
 // | --------------|
-// | 766 Bytes     |
+// | 765 Bytes     |
 // | Stack Space   |
 // -----------------
 
 // Type Definitions
-typedef enum dataType { Integer } DataType;
+typedef enum dataType { Integer, Boolean } DataType;
 
 typedef struct data Data;
 struct data { 
@@ -31,6 +31,7 @@ struct data {
 		int val;
 		Data *ref;
 	} car;
+	int references;
 };
 
 typedef struct symbol { 
@@ -43,18 +44,24 @@ typedef struct symbol {
 Data *datums; 
 Symbol *symbols; 
 
-// Reader (Syntax Error = -2, Keep Reading = -1, Datum = x >= 0 ) 
-typedef enum readerState { Nothing, AnInteger  } ReaderState;
+// Reader State Variables
+#define SYNTAX_ERROR -2
+#define KEEP_READING -1
+typedef enum readerState { Nothing, AnInteger, ABoolean  } ReaderState;
+int currentDatum = 0;
 int currentlyReading  = Nothing;
-int currentInteger = 0; 
-int read(int c) { 
+int currentInteger = 0;
+
+int read_char(int c) { 
 	if(currentlyReading == Nothing) {
 		if(isdigit(c)) {
 			currentlyReading = AnInteger;
+		} else if(c == '#') {
+			currentlyReading = ABoolean;
 		} else if(isspace(c)) {
-			return -1;
+			return KEEP_READING;
 		} else { 
-			return -2;
+			return SYNTAX_ERROR;
 		}
 	}
 
@@ -63,49 +70,75 @@ int read(int c) {
 			if(isdigit(c)) {
 				currentInteger = currentInteger * 10;
 				currentInteger = currentInteger + (c - '0') ;
-				return -1;
+				return KEEP_READING;
 			}
 			if(isspace(c)) {
-				datums[0].type = Integer;
-				datums[0].car.val = currentInteger;
+				datums[currentDatum].type = Integer;
+				datums[currentDatum].references = 0;
+				datums[currentDatum].car.val = currentInteger;
 				currentInteger = 0;
 				currentlyReading = Nothing;
-				return 0;
+				return currentDatum;
 			} else { 
 				currentInteger = 0;
 				currentlyReading = Nothing;
-				return -2;
+				return SYNTAX_ERROR;
+			}
+		case ABoolean: 
+			if(c == '#') {
+				return KEEP_READING; 
+			} else if(c == 't') {
+				datums[currentDatum].type = Boolean;
+				datums[currentDatum].references = 0;
+				datums[currentDatum].car.val = 1;
+				return currentDatum;
+			} else if(c == 'f') {
+				datums[currentDatum].type = Boolean;
+				datums[currentDatum].references = 0;
+				datums[currentDatum].car.val = 0;
+				return currentDatum;
+			} else {
+				return SYNTAX_ERROR;
 			}
 		default:
-			return -1;
+			return KEEP_READING;
 	}
 }
 
-void evaluate(int datumToEval) {
-	Data *datum = &datums[datumToEval];
+void print(int datumToPrint) {
+	Data *datum = &datums[datumToPrint];
+	
+	if(datumToPrint == SYNTAX_ERROR) {
+		puts("Syntax error");
+		return;
+	}
 	
 	switch(datum->type) {
 		case Integer:
-			printf("%d", datum->car.val);
+			printf("%d\n", datum->car.val);
+			break;
+		case Boolean: 
+			printf("%s\n", (datum->car.val == 1) ? "true" : "false");
 			break;
 		default:
 			break;
 	}
+}
+
+int read() { 
+	int r = KEEP_READING;
+	while(r == KEEP_READING) {
+		r = read_char(getchar());
+	}
+	return r;
 }
 
 // Main
 int main(int argc, char *argv[]) {
 	datums = malloc(333 * sizeof *datums);
 	symbols = malloc(67 * sizeof *symbols);
-	
-	int r = -1;
-	while(r == -1) {
-		r = read(getchar());
-		if(r == -2) {
-			printf("Syntax error");
-		}
+	while(1) { 
+		print(read());
 	}
-
-	evaluate(r);
 	return 0;
 }
