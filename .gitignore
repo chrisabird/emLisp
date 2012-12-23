@@ -1,3 +1,4 @@
 *.swp
-src/Lisp
-src/main.o
+*.o
+*.dep
+emLisp
