@@ -1,10 +1,13 @@
-typedef enum tokenType {Empty, LeftParen, RightParen, Integer, Symbol} TokenType;
+typedef enum tokenType {Empty, LeftParen, RightParen, Integer, Symbol, Character} TokenType;
 typedef struct token {
   TokenType type;
   union {
     int integer;
+    int character;
     char symbol[7]; 
   } val;
 } Token;
 
-Token lex(char c);
+void init();
+void handleChar(char c);
+Token findNextToken();
