@@ -4,6 +4,8 @@
 #include <string.h>
 #include "lexer.h"
 
+// TODO: Handle characters that need escaping 
+
 typedef enum lexerState {Nothing, AnInteger, ACharacter, ASymbol} LexerState;
 
 char *buffer;
