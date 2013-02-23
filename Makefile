@@ -1,5 +1,5 @@
 TARGET  := emLisp
-SRCS    := src/test_runner.c src/lexer_test.c src/lexer.c src/cunit.c
+SRCS    := src/test_runner.c src/lexer_test.c src/lexer.c src/cunit.c src/parser_test.c src/parser.c
 OBJS    := ${SRCS:.c=.o}
 DEPS    := ${SRCS:.c=.dep}
 XDEPS   := $(wildcard ${DEPS})
